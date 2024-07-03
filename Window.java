@@ -19,10 +19,6 @@ class Window extends JFrame {
     public static JList list;
     public static Vector vectors = new Vector<>(), shapes = new Vector<>();
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> initGUI());
-    }
-
     public static void initGUI() {
         Window wd = new Window();
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createMenuPanel(), createCanvasPanel());
