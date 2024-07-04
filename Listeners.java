@@ -11,7 +11,7 @@ import java.awt.event.ComponentEvent;
 @SuppressWarnings("unchecked")
 class Listeners {
    private static final Demo CANVAS = Demo.getInstance();
-   protected static final int FRAMES = 25, INTERVAL = 30, FPS = 140;
+   protected static final int FRAMES = 60, INTERVAL = 15, FPS = 140;
    protected static Demo initializeCanvas() {
       CANVAS.addComponentListener(new ComponentAdapter() {
          @Override
@@ -430,17 +430,21 @@ class Listeners {
    }
 
    private static void applyRotations(V3[] vectors, double ax, double ay, double az) {
-      V3[] copy = copyVectors(vectors);
+      
       new Timer(INTERVAL, new ActionListener() {
+         V3[] copy;
          int curr = 0;
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (curr <= FRAMES) {
+            if(curr % FRAMES == 0) {
+               copy = copyVectors(vectors);
+            }
+            if (curr < FRAMES) {
                if (ax == 0) {
                   curr += FRAMES;
                } else 
                applyRotation(vectors, copy, Utils.rotX, ax / FRAMES * curr);
-            } else if (curr <= FRAMES << 1) {
+            } else if (curr < FRAMES << 1) {
                if (ay == 0) {
                   curr += FRAMES;
                } else 
@@ -449,12 +453,11 @@ class Listeners {
                if (az == 0) {
                   curr += FRAMES;
                } else
-               applyRotation(vectors, copy, Utils.rotZ, az / FRAMES *(curr - (FRAMES << 1)));
+               applyRotation(vectors, copy, Utils.rotZ, az / FRAMES * (curr - (FRAMES << 1)));
             }
-            if (curr == FRAMES * 3) {
+            if (curr == FRAMES * 3 - 1) {
                ((Timer) e.getSource()).stop();     
                if(vectors == CANVAS._vectors) updateWindowVectors(vectors);
-               
             } else {
                curr++;
             }

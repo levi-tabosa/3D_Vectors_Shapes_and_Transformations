@@ -46,13 +46,13 @@ class Window extends JFrame {
     }
 
     private static JPanel createInputPanel() {
-        JButton collapse = new JButton("Collapse"), scale = new JButton("Scale"),
-                translate = new JButton("Translate"), rotate = new JButton("Rotate"),
-                toggleShapes = new JButton("Toggle Mode"), shearZ = new JButton("Shear (Z)"),
-                shearX = new JButton("Shear (X)"),shearY = new JButton("Shear (Y)"),
-                projXY = new JButton("Projection XY"), projXZ = new JButton("Projection XZ"),
-                projYZ = new JButton("Projection YZ"), refX = new JButton("Reflection X"), 
-                refY = new JButton("Reflection Y"), refZ = new JButton("Reflection Z"),
+        JButton collapse = new JButton("Collapse"), scale = new JButton("SCALE"),
+                translate = new JButton("TRAN"), rotate = new JButton("ROT"),
+                toggleShapes = new JButton("MODE"), shearZ = new JButton("SHEAR Z"),
+                shearX = new JButton("SHEAR X"),shearY = new JButton("SHEAR Y"),
+                projXY = new JButton("PROJ XY"), projXZ = new JButton("PROJ XZ"),
+                projYZ = new JButton("PROJ YZ"), refX = new JButton("REF X"), 
+                refY = new JButton("REF Y"), refZ = new JButton("REF Z"),
                 sphere = new JButton("Sphere"), cube = new JButton("Cube"), pyramid = new JButton("Pyramid");
 
         collapse.addActionListener(e -> splitPane.setDividerLocation(0));
@@ -74,22 +74,22 @@ class Window extends JFrame {
         pyramid.addActionListener(Listeners.createPyramidListener());
 
         JPanel panel = new JPanel(new GridLayout(6, 3));
-        panel.add(toggleShapes);
         panel.add(scale);
         panel.add(translate);
-        panel.add(shearX);
-        panel.add(shearY);
-        panel.add(shearZ);
+        panel.add(toggleShapes);
         panel.add(projXY);
         panel.add(projXZ);
         panel.add(projYZ);
         panel.add(refX);
         panel.add(refY);
         panel.add(refZ);
-        panel.add(rotate);
+        panel.add(shearX);
+        panel.add(shearY);
+        panel.add(shearZ);
         panel.add(sphere);
         panel.add(cube);
         panel.add(pyramid);
+        panel.add(rotate);
         panel.add(collapse);
 
         return panel;

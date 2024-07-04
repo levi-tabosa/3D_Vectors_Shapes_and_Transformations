@@ -53,7 +53,7 @@ public class Utils {
    );
 }
 interface TransformFunction {
-   V3 apply(V3 u, double ... vals);
+   V3 apply(V3 u, double... vals);
 }
 
 class V3 {

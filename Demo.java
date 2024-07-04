@@ -8,12 +8,12 @@ class Demo extends JComponent {
    public int _i = 80, _H = 1, _W = 1;
    private double angleZ = 0, angleX = 0;
    public V3[] _vectors, vectors;
-   public V3[][] _shapes, shapes;
+   public V3[][] _shapes ={Shape.CYLINDER.getVectors()}, shapes;
    private V3[] lines = {
       new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
       new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
    },
-    _lines = {
+      _lines = {
          new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
          new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
       };
@@ -232,6 +232,19 @@ enum Shape {
          }
          return vectors;
       }
+   },
+   CYLINDER(248) {
+      @Override
+      public V3[] getVectors() {
+         V3 aux = new V3(0, 1, 1);
+         V3[] vectors = new V3[res << 1];
+         for (int i = 0; i < res; i++) {
+            vectors[i << 1] = Utils.rotZ.apply(aux, i * (2 * Math.PI / res));
+            vectors[(i << 1) + 1] = Utils.rotZ.apply(Utils.translate.apply(aux,0,0,-2), i * (2 * Math.PI / res));
+         }
+         return vectors;
+      }
+
    };
 
    Shape() {
