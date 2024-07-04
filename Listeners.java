@@ -74,7 +74,7 @@ class Listeners {
       return e -> {
          if (!e.getValueIsAdjusting()) {
             Vector selected = new Vector<>();
-            Window.list.getSelectedValuesList().forEach(s -> selected.add(s));
+            Window.list.getSelectedValuesList().forEach(selected::add);
             if(!selected.isEmpty() && selected.firstElement() instanceof V3) {
                CANVAS.setVectors((V3[]) selected.toArray(new V3[0]));
             } else {
@@ -335,9 +335,9 @@ class Listeners {
 
    private static void applyTranslation(V3[] vectors, V3[] copy, double dx, double dy, double dz) {
       for (int i = 0; i < copy.length; i++) {
-         vectors[i].coord[0] = copy[i].coord[0] + dx;
-         vectors[i].coord[1] = copy[i].coord[1] + dy;
-         vectors[i].coord[2] = copy[i].coord[2] + dz;
+         vectors[i].x = copy[i].x + dx;
+         vectors[i].y = copy[i].y + dy;
+         vectors[i].z = copy[i].z + dz;
       }
       if(vectors == CANVAS._vectors) {
          CANVAS.updateVectors();
@@ -367,9 +367,9 @@ class Listeners {
    private static void applyScale(V3[] vectors, V3[] original, double factor, int frame) {
       for (int i = 0; i < vectors.length; i++) {
          V3 scaled = Utils.scale.apply(original[i], factor);
-         vectors[i].coord[0] = original[i].coord[0] + (scaled.coord[0] - original[i].coord[0]) / FRAMES * frame;
-         vectors[i].coord[1] = original[i].coord[1] + (scaled.coord[1] - original[i].coord[1]) / FRAMES * frame;
-         vectors[i].coord[2] = original[i].coord[2] + (scaled.coord[2] - original[i].coord[2]) / FRAMES * frame;
+         vectors[i].x = original[i].x + (scaled.x - original[i].x) / FRAMES * frame;
+         vectors[i].y = original[i].y + (scaled.y - original[i].y) / FRAMES * frame;
+         vectors[i].z = original[i].z + (scaled.z - original[i].z) / FRAMES * frame;
       }
       if(vectors == CANVAS._vectors) {
          CANVAS.updateVectors();
@@ -480,7 +480,7 @@ class Listeners {
       }
    }
 
-   private static void applyShears(V3[] vectors, ShearFunction transform, double s, double t) {
+   private static void applyShears(V3[] vectors, TransformFunction transform, double s, double t) {
       V3[] copy = copyVectors(vectors);
       new Timer(INTERVAL, new ActionListener() {
          int curr = 0;
@@ -499,7 +499,7 @@ class Listeners {
       }).start();
    }
 
-   private static void applyShear(V3[] vectors, V3[] original, ShearFunction transform, double s, double t) {
+   private static void applyShear(V3[] vectors, V3[] original, TransformFunction transform, double s, double t) {
       for (int i = 0; i < vectors.length; i++) {
          vectors[i] = transform.apply(original[i], s, t);
       }
@@ -527,7 +527,7 @@ class Listeners {
             hasDecimalPoint = true;
          }
       }
-      return c[c.length-1] != '.' && c[c.length-1] > 47 && c[c.length-1] < 58;
+      return c[c.length-1] > 47 && c[c.length-1] < 58;
    }
 
    
@@ -546,7 +546,7 @@ class Listeners {
    private static V3[] copyVectors(V3[] vectors) {
       V3[] copy = new V3[vectors.length];
       for (int i = 0; i < vectors.length; i++) {
-         copy[i] = new V3(vectors[i].coord[0], vectors[i].coord[1], vectors[i].coord[2]);
+         copy[i] = new V3(vectors[i].x, vectors[i].y, vectors[i].z);
       }
       return copy;
    }
