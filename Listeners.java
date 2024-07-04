@@ -44,16 +44,14 @@ class Listeners {
             if (isVectorsVisible) {
                shapesBackup = CANVAS._shapes;
                CANVAS.setVectors((V3[])vectorsBackup);
-               vectorsBackup = null;
                CANVAS.setShapes(null);
-               CANVAS.updateVectors();
+               vectorsBackup = null;
                Window.appendVectors();
             } else {
                vectorsBackup = CANVAS._vectors;
-               CANVAS._shapes = (V3[][]) shapesBackup;
-               shapesBackup = null;
                CANVAS.setVectors(null);
-               CANVAS.updateShapes();
+               CANVAS.setShapes((V3[][]) shapesBackup);
+               shapesBackup = null;
                Window.appendShapes();
             }
             isVectorsVisible = !isVectorsVisible;
@@ -100,8 +98,7 @@ class Listeners {
             dz = validateInput(z) ? Double.parseDouble(z) : 0;
          if (CANVAS._vectors != null) {
             applyTranslations(CANVAS._vectors, dx, dy, dz);
-         }
-         if(CANVAS._shapes != null) {
+         } else if(CANVAS._shapes != null) {
             for (V3[] shape : CANVAS._shapes) {
                applyTranslations(shape, dx, dy, dz);
             }
@@ -246,7 +243,7 @@ class Listeners {
          if(CANVAS._vectors != null) {
             V3[] aux = CANVAS._vectors;
             applyShears(aux, Utils.shearOnX, factorY, factorZ);
-         } else {
+         } else if(CANVAS._shapes != null){
             for (V3[] aux : CANVAS._shapes) {
                applyShears(aux, Utils.shearOnX, factorY, factorZ);
             }
@@ -262,7 +259,7 @@ class Listeners {
          if(CANVAS._vectors != null) {
             V3[] aux = CANVAS._vectors;
             applyShears(aux, Utils.shearOnY, factorX, factorZ);
-         } else {
+         } else if (CANVAS._shapes != null){
             for (V3[] aux : CANVAS._shapes) {
                applyShears(aux, Utils.shearOnY, factorX, factorZ);
             }
@@ -279,7 +276,7 @@ class Listeners {
          if(CANVAS._vectors != null) {
             V3[] aux = CANVAS._vectors;
             applyShears(aux, Utils.shearOnZ, factorX, factorY);
-         } else {
+         } else if(CANVAS._shapes != null) {
             for (V3[] aux : CANVAS._shapes) {
                applyShears(aux, Utils.shearOnZ, factorX, factorY);
             }

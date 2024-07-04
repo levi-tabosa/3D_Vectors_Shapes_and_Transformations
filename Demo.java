@@ -233,7 +233,7 @@ enum Shape {
          return vectors;
       }
    },
-   CYLINDER(248) {
+   CYLINDER(96) {
       @Override
       public V3[] getVectors() {
          V3 aux = new V3(0, 1, 1);
