@@ -10,7 +10,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 @SuppressWarnings("rawtypes")
 class Window extends JFrame {

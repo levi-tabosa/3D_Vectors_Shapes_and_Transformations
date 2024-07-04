@@ -1,37 +1,30 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseMotionAdapter;
 import java.util.Vector;
 import javax.swing.Timer;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 
 @SuppressWarnings("unchecked")
 class Listeners {
    private static final Demo CANVAS = Demo.getInstance();
    protected static final int FRAMES = 25, INTERVAL = 30, FPS = 140;
    protected static Demo initializeCanvas() {
-      CANVAS.addComponentListener(new ComponentListener() {
+      CANVAS.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
             CANVAS.updateSizeFields();
          }
-         @Override
-         public void componentMoved(ComponentEvent e) {}
-         @Override
-         public void componentShown(ComponentEvent e) {}
-         @Override
-         public void componentHidden(ComponentEvent e) {}
       });
-      CANVAS.addMouseMotionListener(new MouseMotionListener() {
+
+      CANVAS.addMouseMotionListener(new MouseMotionAdapter() {
          @Override
          public void mouseDragged(MouseEvent e) {
             CANVAS.screenPositionToAngles(e.getX(), e.getY());
          }
-         @Override
-         public void mouseMoved(MouseEvent e) {}
       });
       CANVAS.addMouseWheelListener(e -> CANVAS.incrementI(e.getWheelRotation() << 3));
       
@@ -74,7 +67,7 @@ class Listeners {
       return e -> {
          if (!e.getValueIsAdjusting()) {
             Vector selected = new Vector<>();
-            Window.list.getSelectedValuesList().forEach(selected::add);
+            Window.list.getSelectedValuesList().forEach(s -> selected.add(s));
             if(!selected.isEmpty() && selected.firstElement() instanceof V3) {
                CANVAS.setVectors((V3[]) selected.toArray(new V3[0]));
             } else {
@@ -527,7 +520,7 @@ class Listeners {
             hasDecimalPoint = true;
          }
       }
-      return c[c.length-1] > 47 && c[c.length-1] < 58;
+      return c[c.length-1] != '.' && c[c.length-1] > 47 && c[c.length-1] < 58;
    }
 
    
