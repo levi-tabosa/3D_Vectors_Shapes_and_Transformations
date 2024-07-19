@@ -39,11 +39,6 @@ public class Utils {
          u.x + u.y * s[0], u.y, u.z + u.y * s[1]);
    public static final TransformFunction shearOnZ = (u, s) -> new V3(
          u.x + u.z * s[0], u.y + u.z * s[1], u.z);
-
-   public static V3[][] permute(V3[] array) {
-
-      return null;
-   }
 }
 
 interface TransformFunction {
