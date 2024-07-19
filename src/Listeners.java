@@ -340,18 +340,12 @@ class Listeners {
          int[][] permut(int[] elements) {
             int n = elements.length, fat = 1, i = 0, count = 0;
             int[] indexes = new int[n];
-            
-            try {
-               for (int j = n; j > 1; j--) {
-                  fat *= j;
-               }
-               System.out.println(fat);
-            } catch (Exception e) {
-               System.out.println(fat);
-               e.printStackTrace();
+
+            for (int j = n; j > 1; j--) {
+               fat *= j;
             }
 
-            int[][] permutations = new int[fat][n];
+            int[][] permutations = new int[fat][n]; 
             permutations[count++] = elements;
 
             while (i < n) {
