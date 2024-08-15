@@ -114,33 +114,6 @@ class Demo extends JComponent {
             int screenY = (int) (center_y + (interpZ * near / (interpY + far)) * _i);
             g.drawString(j - (gridRes >> 1) + "", screenX, screenY); // draws unit label
          }
-         // int initialPx = (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y
-         // + far)) * _i);
-         // int initialPy = (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y
-         // + far)) * _i);
-         // int finalPx = (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i <<
-         // 1) + 1].y + far)) * _i);
-         // int finalPy = (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i <<
-         // 1) + 1].y + far)) * _i);
-         // g.drawLine(
-         // initialPx,
-         // initialPy,
-         // finalPx,
-         // finalPy
-         // );
-         // for (int j = -gridRes >> 1; j < 0; j++) { // calculates interpolation between
-         // initial x, y to final x, y based on projection
-         // g.drawString(
-         // j + "",
-         // center_x - (finalPx - center_x) / (gridRes >> 1) * j,
-         // center_y - (finalPy - center_y) / (gridRes >> 1) * j);
-         // }
-         // for (int j = 0; j <= gridRes >> 1; j++) {
-         // g.drawString(
-         // j + "",
-         // center_x + (initialPx - center_x) / (gridRes >> 1) * j,
-         // center_y + (initialPy - center_y) / (gridRes >> 1) * j);
-         // }
       }
       g.setColor(new Color(90, 90, 90, 120));
       for (int i = 0; i < gridRes; i++) {
@@ -281,6 +254,5 @@ enum Shape {
    };
 
    public int res;
-
    public abstract V3[] getVectors();
 }
