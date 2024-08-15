@@ -1,9 +1,18 @@
-## 3D Vector and shape (some of them) plotter
+## Getting Started
 
-Java Swing application.
-Introducing an interactive user interface for inserting and manipulating point vectors 
-and shapes, applying simple transformations (shearing, rotation, scaling,  projection and more) at runtime in 3D space perspective projection.
+Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
 
-Java Swing Animations
+## Folder Structure
 
-Shortest path algorithm (TSA) visualization.
+The workspace contains two folders by default, where:
+
+- `src`: the folder to maintain sources
+- `lib`: the folder to maintain dependencies
+
+Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+
+> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+
+## Dependency Management
+
+The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).

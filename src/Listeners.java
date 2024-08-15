@@ -1,5 +1,6 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -9,7 +10,6 @@ import java.io.IOException;
 import java.util.Vector;
 import javax.swing.Timer;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.ComponentEvent;
 
 @SuppressWarnings("unchecked")
 class Listeners {
@@ -30,7 +30,7 @@ class Listeners {
             CANVAS.screenPositionToAngles(e.getX(), e.getY());
          }
       });
-      CANVAS.addMouseWheelListener(e -> CANVAS.incrementI(e.getWheelRotation() << 3));
+      CANVAS.addMouseWheelListener(e -> CANVAS.incrementI(e.getWheelRotation() << 2));
 
       new Timer(1000 / FPS, e -> CANVAS.repaint()).start();
       return CANVAS;
@@ -97,12 +97,13 @@ class Listeners {
             String line;
             while ((line = br.readLine()) != null) {
                String[] parts = line.split(" ");
-               Window.vectors.add(new V3(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2])));
+               Window.vectors.add(
+                     new V3(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2])));
                Window.appendVectors();
             }
-        } catch (IOException q) {
+         } catch (IOException q) {
             q.printStackTrace();
-        } 
+         }
       };
    }
 
@@ -232,8 +233,8 @@ class Listeners {
          public void actionPerformed(ActionEvent e) {
             String x = Window._x.getText(), y = Window._y.getText(), z = Window._z.getText();
             double angleX = validateInput(x) ? Math.toRadians(Double.parseDouble(x)) : 0,
-               angleY = validateInput(y) ? Math.toRadians(Double.parseDouble(y)) : 0,
-               angleZ = validateInput(z) ? Math.toRadians(Double.parseDouble(z)) : 0;
+                  angleY = validateInput(y) ? Math.toRadians(Double.parseDouble(y)) : 0,
+                  angleZ = validateInput(z) ? Math.toRadians(Double.parseDouble(z)) : 0;
 
             if (angleX == angleY && angleY == angleZ && angleZ == 0) {
                if (flag) {
@@ -325,7 +326,7 @@ class Listeners {
       };
    }
 
-   protected static ActionListener createTravellingSalesmanlistener() {
+   protected static ActionListener createTravellingSalesmanListener() {
       return new ActionListener() {
          double totalDistance(int[] indexes, double[][] distances) {
             double total = 0;
@@ -340,12 +341,18 @@ class Listeners {
          int[][] permut(int[] elements) {
             int n = elements.length, fat = 1, i = 0, count = 0;
             int[] indexes = new int[n];
-
-            for (int j = n; j > 1; j--) {
-               fat *= j;
+            
+            try {
+               for (int j = n; j > 1; j--) {
+                  fat *= j;
+               }
+               System.out.println(fat);
+            } catch (Exception e) {
+               System.out.println(fat);
+               e.printStackTrace();
             }
 
-            int[][] permutations = new int[fat][n]; 
+            int[][] permutations = new int[fat][n];
             permutations[count++] = elements;
 
             while (i < n) {
@@ -407,6 +414,78 @@ class Listeners {
          }
       };
    }
+   // protected static ActionListener createTravellingSalesmanListener() {
+   //    return new ActionListener() {
+   //       double totalDistance(int[] indexes, double[][] distances) {
+   //          double total = 0;
+   //          for (int i = 0; i < indexes.length - 1; i++) {
+   //             total += distances[indexes[i]][indexes[i + 1]];
+   //          }
+   //          total += distances[indexes[indexes.length - 1]][indexes[0]];
+   //          return total;
+   //       }
+
+   //       void findShortestPath(int[] elements, double[][] distances, int[] bestPath, double[] bestDistance) {
+   //          int[] currentPath = Arrays.copyOf(elements, elements.length);
+   //          permuteAndEvaluate(currentPath, 0, distances, bestPath, bestDistance);
+   //       }
+
+   //       void permuteAndEvaluate(int[] elements, int start, double[][] distances, int[] bestPath,
+   //             double[] bestDistance) {
+   //          if (start == elements.length - 1) {
+   //             double distance = totalDistance(elements, distances);
+   //             if (distance < bestDistance[0]) {
+   //                bestDistance[0] = distance;
+   //                System.arraycopy(elements, 0, bestPath, 0, elements.length);
+   //             }
+   //          } else {
+   //             for (int i = start; i < elements.length; i++) {
+   //                swap(elements, start, i);
+   //                permuteAndEvaluate(elements, start + 1, distances, bestPath, bestDistance);
+   //                swap(elements, start, i);
+   //             }
+   //          }
+   //       }
+
+   //       void swap(int[] elements, int a, int b) {
+   //          int temp = elements[a];
+   //          elements[a] = elements[b];
+   //          elements[b] = temp;
+   //       }
+
+   //       @Override
+   //       public void actionPerformed(ActionEvent e) {
+   //          if (CANVAS._vectors == null) {
+   //             return;
+   //          }
+   //          int n = CANVAS._vectors.length;
+   //          double[][] distances = new double[n][n];
+
+   //          for (int i = 0; i < n; i++) {
+   //             for (int j = 0; j < n; j++) {
+   //                distances[i][j] = Math.sqrt(
+   //                      Math.pow((CANVAS._vectors[j].x - CANVAS._vectors[i].x), 2) +
+   //                            Math.pow((CANVAS._vectors[j].y - CANVAS._vectors[i].y), 2) +
+   //                            Math.pow((CANVAS._vectors[j].z - CANVAS._vectors[i].z), 2));
+   //             }
+   //          }
+
+   //          int[] shortestPath = new int[n];
+   //          for (int i = 0; i < n; i++) {
+   //             shortestPath[i] = i;
+   //          }
+   //          double[] shortestLength = { Double.MAX_VALUE };
+
+   //          findShortestPath(shortestPath, distances, shortestPath, shortestLength);
+
+   //          CANVAS._shapes = new V3[1][n];
+   //          for (int i = 0; i < n; i++) {
+   //             CANVAS._shapes[0][i] = CANVAS._vectors[shortestPath[i]];
+   //          }
+   //          CANVAS.updateShapes();
+   //       }
+   //    };
+   // }
 
    private static void applyTranslations(V3[] vectors, double dx, double dy, double dz) {
       V3[] copy = copyVectors(vectors);

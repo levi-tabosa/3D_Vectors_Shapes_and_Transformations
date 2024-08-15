@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 public class Utils {
    public static final TransformFunction projXY = (u, f) -> new V3(
          u.x, u.y, u.z * f[0]);
@@ -25,6 +23,10 @@ public class Utils {
          u.x * Math.cos(a[0]) + u.y * Math.sin(a[0]),
          u.y * Math.cos(a[0]) - u.x * Math.sin(a[0]),
          u.z);
+   public static final TransformFunction rotZX = (u, a) -> new V3( // combined rotations to avoid object recreation
+         u.x * Math.cos(a[0]) + u.y * Math.sin(a[0]),
+         (u.y * Math.cos(a[0]) - u.x * Math.sin(a[0])) * Math.cos(a[1]) + u.z * Math.sin(a[1]),
+         u.z * Math.cos(a[1]) - (u.y * Math.cos(a[0]) - u.x * Math.sin(a[0])) * Math.sin(a[1]));
    public static final TransformFunction scale = (u, f) -> new V3(
          u.x * f[0],
          u.y * f[0],

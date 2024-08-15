@@ -61,7 +61,7 @@ class Window extends JFrame {
       scale.addActionListener(Listeners.createScaleListener());
       translate.addActionListener(Listeners.createTranslateListener());
       toggleShapes.addActionListener(Listeners.createToggleShapesListener());
-      tsa.addActionListener(Listeners.createTravellingSalesmanlistener());
+      tsa.addActionListener(Listeners.createTravellingSalesmanListener());
       shearX.addActionListener(Listeners.createShearOnXListener());
       shearY.addActionListener(Listeners.createShearOnYListener());
       shearZ.addActionListener(Listeners.createShearOnZListener());

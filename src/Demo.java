@@ -4,44 +4,46 @@ import java.awt.Image;
 import javax.swing.JComponent;
 
 class Demo extends JComponent {
-   private final double far = 40, near = 10;
-   private int _i = 80, _H = 1, _W = 1;
-   private double angleZ = 0, angleX = 0;
-   public V3[] _vectors, vectors;
+   private int _i = 80, _H = 1, _W = 1, gridRes = 300; // TODO: gridRes from user input, toggle perspective projection
+   private final double far = gridRes << 2, near = gridRes >> 1; // near and far distances for perspective projection
+   public V3[] _vectors, vectors; // V3 arrays storing point vectors inserted by user
+   private V3[] _gridLines = new V3[gridRes << 2], gridLines = new V3[gridRes << 2]; // V3 lines arrays storing start and end points to render lines
+   private V3[] _lines, lines;
    public V3[][] _shapes, shapes;
-   private V3[] lines = {
-      new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
-      new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
-   },
-    _lines = {
-         new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
-         new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
-      };
-   private final V3[] gridLines = new V3[84], _gridLines = new V3[84];
-   private static Demo instance;
-   private Image image;
-   private Graphics graphics;
+   private double angleZ = 0, angleX = 0;
+   // arrays followed by _ store original values while their counterpart stores rotated values based on camera angle used by render methods to perform rotations only when camera moves 
+
+   private static Demo instance; // singleton instance
+
+   private Graphics graphics; // components for double buffering
+   private Image image;       // --
 
    public static Demo getInstance() {
-      if (instance == null) {
-         instance = new Demo();
-      }
-      return instance;
+      return instance != null ? instance : new Demo();
    }
 
    private Demo() {
       super();
-      for (int i = -10; i <= 10; i++) {
-         int idx = (i + 10) << 2;
-         gridLines[idx] = new V3(i, 10, 0);
-         gridLines[idx + 1] = new V3(i, -10, 0);
-         gridLines[idx + 2] = new V3(10, i, 0);
-         gridLines[idx + 3] = new V3(-10, i, 0);
-         _gridLines[idx] = new V3(i, 10, 0);
-         _gridLines[idx + 1] = new V3(i, -10, 0);
-         _gridLines[idx + 2] = new V3(10, i, 0);
-         _gridLines[idx + 3] = new V3(-10, i, 0);
+      int j = gridRes >> 1;
+
+      for (int i = -j; i < j; i++) {
+         gridLines[i + j << 2] = new V3(i, j, 0); //
+         gridLines[(i + j << 2) + 1] = new V3(i, -j, 0);
+         gridLines[(i + j << 2) + 2] = new V3(j, i, 0);
+         gridLines[(i + j << 2) + 3] = new V3(-j, i, 0);
+         _gridLines[i + j << 2] = new V3(i, j, 0);
+         _gridLines[(i + j << 2) + 1] = new V3(i, -j, 0);
+         _gridLines[(i + j << 2) + 2] = new V3(j, i, 0);
+         _gridLines[(i + j << 2) + 3] = new V3(-j, i, 0);
       }
+      lines = new V3[] {
+            new V3(j, 0, 0), new V3(-j, 0, 0), new V3(0, j, 0),
+            new V3(0, -j, 0), new V3(0, 0, j), new V3(0, 0, -j)
+      };
+      _lines = new V3[] {
+            new V3(j, 0, 0), new V3(-j, 0, 0), new V3(0, j, 0),
+            new V3(0, -j, 0), new V3(0, 0, j), new V3(0, 0, -j)
+      };
    }
 
    private void drawFrame(Graphics g) {
@@ -66,13 +68,13 @@ class Demo extends JComponent {
                points[j][0] = (int) ((_W >> 1) + (shapes[i][j].x * near / (shapes[i][j].y + far)) * _i);
                points[j][1] = (int) ((_H >> 1) + (shapes[i][j].z * near / (shapes[i][j].y + far)) * _i);
             }
-
-            for (int j = 0; j < n; j++) { // TODO: draw_edges (3-Regular graph)
+            for (int j = 0; j < n - 1; j++) {
                g.setColor(Color.YELLOW);
-               g.drawLine(points[j][0], points[j][1], points[(j + 1) % n][0], points[(j + 1) % n][1]);
-               g.setColor(Color.PINK);
-               g.drawLine(points[j][0], points[j][1], points[(j + 3) % n][0], points[(j + 3) % n][1]);
+               g.drawLine(points[j][0], points[j][1], points[j + 1][0], points[j + 1][1]);
+               // g.setColor(Color.PINK); uncomment line for tsa path func
+               g.drawLine(points[j][0], points[j][1], points[(j + 3) % n][0], points[(j + 3) % n][1]); // draw cube ?
             }
+            g.drawLine(points[n - 1][0], points[n - 1][1], points[0][0], points[0][1]);
          }
       }
    }
@@ -81,8 +83,8 @@ class Demo extends JComponent {
       if (_vectors != null) {
          g.setColor(Color.PINK);
          for (int i = 0; i < _vectors.length; i++) {
-            int px = (int) ((_W >> 1) + (vectors[i].x * near / (vectors[i].y + far)) * _i),
-               py = (int) ((_H >> 1) + (vectors[i].z * near / (vectors[i].y + far)) * _i);
+            int px = (int) ((_W >> 1) + (vectors[i].x * near / (vectors[i].y + far)) * _i);
+            int py = (int) ((_H >> 1) + (vectors[i].z * near / (vectors[i].y + far)) * _i);
             g.drawString(i + "", px, py);
             g.drawLine(_W >> 1, _H >> 1, px, py);
             g.drawString(_vectors[i] + "", px - 10, py - 10);
@@ -92,31 +94,66 @@ class Demo extends JComponent {
 
    private void drawLines(Graphics g) {
       int center_x = _W >> 1, center_y = _H >> 1;
+
       g.setColor(Color.BLACK);
       g.fillRect(0, 0, _W, _H);
-      for (int i = 0; i < 3; i++) {
-         int px1 = (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y + far)) * _i),
-            py1 = (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y + far)) * _i),
-            px2 = (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i << 1) + 1].y + far)) * _i),
-            py2 = (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i << 1) + 1].y + far)) * _i);
-         g.setColor(new Color(255 - i * 100, i * 110, 22 << i << 1));
-         g.drawLine(px1, py1, px2, py2);
-         for (int j = -10; j <= 10; j++) {
-            g.drawString(j + "", center_x + (px2 - center_x) / 10 * j, center_y + (py2 - center_y) / 10 * j);
+      for (int i = 0; i < 3; i++) { // shifts i - draws lines from v3 in i to v3 in i+1
+         g.setColor(new Color(255 - i * 100, i * 110, 22 << i));
+         g.drawLine(
+               (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y + far)) * _i),
+               (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y + far)) * _i),
+               (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i << 1) + 1].y + far)) * _i),
+               (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i << 1) + 1].y + far)) * _i));
+         for (int j = 0; j <= gridRes; j++) { // calculates interpolation between initial x, y to final x, y based on
+                                              // perspective
+            double factor = j / (double) (gridRes);
+            double interpX = lines[i << 1].x + factor * (lines[(i << 1) + 1].x - lines[i << 1].x);
+            double interpY = lines[i << 1].y + factor * (lines[(i << 1) + 1].y - lines[i << 1].y);
+            double interpZ = lines[i << 1].z + factor * (lines[(i << 1) + 1].z - lines[i << 1].z);
+            int screenX = (int) (center_x + (interpX * near / (interpY + far)) * _i);
+            int screenY = (int) (center_y + (interpZ * near / (interpY + far)) * _i);
+            g.drawString(j - (gridRes >> 1) + "", screenX, screenY); // draws unit label
          }
+         // int initialPx = (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y
+         // + far)) * _i);
+         // int initialPy = (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y
+         // + far)) * _i);
+         // int finalPx = (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i <<
+         // 1) + 1].y + far)) * _i);
+         // int finalPy = (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i <<
+         // 1) + 1].y + far)) * _i);
+         // g.drawLine(
+         // initialPx,
+         // initialPy,
+         // finalPx,
+         // finalPy
+         // );
+         // for (int j = -gridRes >> 1; j < 0; j++) { // calculates interpolation between
+         // initial x, y to final x, y based on projection
+         // g.drawString(
+         // j + "",
+         // center_x - (finalPx - center_x) / (gridRes >> 1) * j,
+         // center_y - (finalPy - center_y) / (gridRes >> 1) * j);
+         // }
+         // for (int j = 0; j <= gridRes >> 1; j++) {
+         // g.drawString(
+         // j + "",
+         // center_x + (initialPx - center_x) / (gridRes >> 1) * j,
+         // center_y + (initialPy - center_y) / (gridRes >> 1) * j);
+         // }
       }
       g.setColor(new Color(90, 90, 90, 120));
-      for (int i = 0; i < 21; i++) {
-         int px1 = (int) (center_x + (gridLines[i << 2].x * near / (gridLines[i << 2].y + far)) * _i),
-            py1 = (int) (center_y + (gridLines[i << 2].z * near / (gridLines[i << 2].y + far)) * _i),
-            px2 = (int) (center_x + (gridLines[(i << 2) + 1].x * near / (gridLines[(i << 2) + 1].y + far)) * _i),
-            py2 = (int) (center_y + (gridLines[(i << 2) + 1].z * near / (gridLines[(i << 2) + 1].y + far)) * _i);
-         g.drawLine(px1, py1, px2, py2);
-         px1 = (int) (center_x + (gridLines[(i << 2) + 2].x * near / (gridLines[(i << 2) + 2].y + far)) * _i);
-         py1 = (int) (center_y + (gridLines[(i << 2) + 2].z * near / (gridLines[(i << 2) + 2].y + far)) * _i);
-         px2 = (int) (center_x + (gridLines[(i << 2) + 3].x * near / (gridLines[(i << 2) + 3].y + far)) * _i);
-         py2 = (int) (center_y + (gridLines[(i << 2) + 3].z * near / (gridLines[(i << 2) + 3].y + far)) * _i);
-         g.drawLine(px1, py1, px2, py2);
+      for (int i = 0; i < gridRes; i++) {
+         g.drawLine( // draws grid y lines
+               (int) (center_x + (gridLines[i << 2].x * near / (gridLines[i << 2].y + far)) * _i),
+               (int) (center_y + (gridLines[i << 2].z * near / (gridLines[i << 2].y + far)) * _i),
+               (int) (center_x + (gridLines[(i << 2) + 1].x * near / (gridLines[(i << 2) + 1].y + far)) * _i),
+               (int) (center_y + (gridLines[(i << 2) + 1].z * near / (gridLines[(i << 2) + 1].y + far)) * _i));
+         g.drawLine(// draws grid x lines
+               (int) (center_x + (gridLines[(i << 2) + 2].x * near / (gridLines[(i << 2) + 2].y + far)) * _i),
+               (int) (center_y + (gridLines[(i << 2) + 2].z * near / (gridLines[(i << 2) + 2].y + far)) * _i),
+               (int) (center_x + (gridLines[(i << 2) + 3].x * near / (gridLines[(i << 2) + 3].y + far)) * _i),
+               (int) (center_y + (gridLines[(i << 2) + 3].z * near / (gridLines[(i << 2) + 3].y + far)) * _i));
       }
    }
 
@@ -127,11 +164,11 @@ class Demo extends JComponent {
 
    public void updateGridLines() {
       for (int i = 0; i < 6; i++) {
-         lines[i] = Utils.rotX.apply(Utils.rotZ.apply(_lines[i], angleZ), angleX);
+         lines[i] = Utils.rotZX.apply(_lines[i], angleZ, angleX);
       }
-      for (int i = 0; i < 42; i++) {
-         gridLines[i << 1] = Utils.rotX.apply(Utils.rotZ.apply(_gridLines[i << 1], angleZ), angleX);
-         gridLines[(i << 1) + 1] = Utils.rotX.apply(Utils.rotZ.apply(_gridLines[(i << 1) + 1], angleZ), angleX);
+      for (int i = 0; i < gridRes << 1; i++) {
+         gridLines[i << 1] = Utils.rotZX.apply(_gridLines[i << 1], angleZ, angleX);
+         gridLines[(i << 1) + 1] = Utils.rotZX.apply(_gridLines[(i << 1) + 1], angleZ, angleX);
       }
    }
 
@@ -168,7 +205,7 @@ class Demo extends JComponent {
             vectors = new V3[_vectors.length];
          }
          for (int i = 0; i < _vectors.length; i++) {
-            vectors[i] = Utils.rotX.apply(Utils.rotZ.apply(_vectors[i], angleZ), angleX);
+            vectors[i] = Utils.rotZX.apply(_vectors[i], angleZ, angleX);
          }
       }
    }
@@ -181,7 +218,7 @@ class Demo extends JComponent {
                shapes[i] = new V3[_shapes[i].length];
             }
             for (int j = 0; j < _shapes[i].length; j++) {
-               shapes[i][j] = Utils.rotX.apply(Utils.rotZ.apply(_shapes[i][j], angleZ), angleX);
+               shapes[i][j] = Utils.rotZX.apply(_shapes[i][j], angleZ, angleX);
             }
          }
       } else {
@@ -189,8 +226,8 @@ class Demo extends JComponent {
       }
    }
 
-   public void incrementI(int i) {
-      _i += i;
+   public void incrementI(int amount) {
+      _i += amount;
    }
 
    @Override
