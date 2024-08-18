@@ -2,248 +2,382 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import javax.swing.JComponent;
-
+/**
+ * This class represents the canvas where 3D objects and vectors are drawn.
+ * It handles the rendering of 3D objects using perspective projection.
+ * It also manages camera angles, zooming, and double buffering for smooth animation.
+ */
 class Demo extends JComponent {
-   private final double far = 40, near = 10;
-   private int _i = 80, _H = 1, _W = 1;
-   private double angleZ = 0, angleX = 0;
-   public V3[] _vectors, vectors;
-   public V3[][] _shapes, shapes;
-   private V3[] lines = {
-      new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
-      new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
-   },
-    _lines = {
-         new V3(10, 0, 0), new V3(-10, 0, 0), new V3(0, 10, 0),
-         new V3(0, -10, 0), new V3(0, 0, 10), new V3(0, 0, -10)
-      };
-   private final V3[] gridLines = new V3[84], _gridLines = new V3[84];
-   private static Demo instance;
-   private Image image;
-   private Graphics graphics;
+    // Fields for canvas size, zoom level, grid resolution, and perspective projection
+    private int _i = 80, _H = 1, _W = 1, gridRes = 100; 
+    private final double far = gridRes << 1, near = gridRes >> 1; 
 
-   public static Demo getInstance() {
-      if (instance == null) {
-         instance = new Demo();
-      }
-      return instance;
-   }
+    // Arrays to store 3D vectors for objects, lines, and grid lines
+    public V3[] _vectors, vectors; // Original and rotated vectors
+    private V3[] _gridLines = new V3[gridRes << 2], gridLines = new V3[gridRes << 2]; // Original and rotated grid lines
+    private V3[] _lines, lines; // Original and rotated axis lines
+    public V3[][] _shapes, shapes; // Original and rotated shapes
 
-   private Demo() {
-      super();
-      for (int i = -10; i <= 10; i++) {
-         int idx = (i + 10) << 2;
-         gridLines[idx] = new V3(i, 10, 0);
-         gridLines[idx + 1] = new V3(i, -10, 0);
-         gridLines[idx + 2] = new V3(10, i, 0);
-         gridLines[idx + 3] = new V3(-10, i, 0);
-         _gridLines[idx] = new V3(i, 10, 0);
-         _gridLines[idx + 1] = new V3(i, -10, 0);
-         _gridLines[idx + 2] = new V3(10, i, 0);
-         _gridLines[idx + 3] = new V3(-10, i, 0);
-      }
-   }
+    // Camera angles for rotation
+    private double angleZ = 0, angleX = 0;
 
-   private void drawFrame(Graphics g) {
-      if (image == null || image.getWidth(null) != _W || image.getHeight(null) != _H) {
-         image = createImage(_W, _H);
-         graphics = image.getGraphics();
-      }
-      drawLines(graphics);
-      drawShapes(graphics);
-      drawVector(graphics);
-      g.drawImage(image, 0, 0, null);
-      graphics.clearRect(0, 0, _W, _H);
-   }
+    // Singleton instance of Demo
+    private static Demo instance; 
 
-   private void drawShapes(Graphics g) {
-      if (shapes != null) {
-         g.setColor(Color.PINK);
-         for (int i = 0; i < _shapes.length; i++) {
-            int n = _shapes[i].length;
-            int[][] points = new int[n][2];
-            for (int j = 0; j < n; j++) {
-               points[j][0] = (int) ((_W >> 1) + (shapes[i][j].x * near / (shapes[i][j].y + far)) * _i);
-               points[j][1] = (int) ((_H >> 1) + (shapes[i][j].z * near / (shapes[i][j].y + far)) * _i);
+    // Graphics and image for double buffering
+    private Graphics graphics; 
+    private Image image;       
+
+    /**
+     * Returns the singleton instance of Demo.
+     * 
+     * @return The singleton instance of Demo.
+     */
+    public static Demo getInstance() {
+        // If instance is null, create a new Demo object
+        return instance != null ? instance : new Demo();
+    }
+
+    /**
+     * Private constructor for singleton pattern.
+     * Initializes grid lines and axis lines.
+     */
+    private Demo() {
+        super();
+        int j = gridRes >> 1;
+
+        // Initialize grid lines
+        for (int i = -j; (gridRes & 1) == 1 ? i <= j : i < j; i++) { 
+            gridLines[i + j << 2] = new V3(i, j, 0);
+            gridLines[(i + j << 2) + 1] = new V3(i, -j, 0);
+            gridLines[(i + j << 2) + 2] = new V3(j, i, 0);
+            gridLines[(i + j << 2) + 3] = new V3(-j, i, 0);
+            _gridLines[i + j << 2] = new V3(i, j, 0);
+            _gridLines[(i + j << 2) + 1] = new V3(i, -j, 0);
+            _gridLines[(i + j << 2) + 2] = new V3(j, i, 0);
+            _gridLines[(i + j << 2) + 3] = new V3(-j, i, 0);
+        }
+        
+        // Initialize axis lines
+        lines = new V3[] {
+                new V3(j, 0, 0), new V3(-j, 0, 0), new V3(0, j, 0),
+                new V3(0, -j, 0), new V3(0, 0, j), new V3(0, 0, -j)
+        };
+        _lines = new V3[] {
+                new V3(j, 0, 0), new V3(-j, 0, 0), new V3(0, j, 0),
+                new V3(0, -j, 0), new V3(0, 0, j), new V3(0, 0, -j)
+        };
+    }
+
+    /**
+     * Draws the entire frame, including lines, shapes, and vectors.
+     * 
+     * @param g The Graphics object to draw on.
+     */
+    private void drawFrame(Graphics g) {
+        // Create a new image for double buffering if necessary
+        if (image == null || image.getWidth(null) != _W || image.getHeight(null) != _H) {
+            image = createImage(_W, _H);
+            graphics = image.getGraphics();
+        }
+        
+        // Draw lines, shapes, and vectors on the buffered image
+        drawLines(graphics);
+        drawShapes(graphics);
+        drawVector(graphics);
+        
+        // Draw the buffered image to the screen
+        g.drawImage(image, 0, 0, null);
+        graphics.clearRect(0, 0, _W, _H);
+    }
+
+    /**
+     * Draws the 3D shapes on the canvas using perspective projection.
+     * 
+     * @param g The Graphics object to draw on.
+     */
+    private void drawShapes(Graphics g) {
+        if (shapes != null) {
+            g.setColor(Color.PINK);
+            // Iterate through each shape
+            for (int i = 0; i < shapes.length; i++) {
+                int n = shapes[i].length;
+                int[][] points = new int[n][2];
+                // Project each vertex of the shape onto the 2D screen
+                for (int j = 0; j < n; j++) {
+                    points[j][0] = (int) ((_W >> 1) + (shapes[i][j].x * near / (shapes[i][j].y + far)) * _i);
+                    points[j][1] = (int) ((_H >> 1) + (shapes[i][j].z * near / (shapes[i][j].y + far)) * _i);
+                }
+                // Draw lines between projected vertices to form the shape
+                for (int j = 0; j < n - 1; j++) {
+                    g.setColor(Color.YELLOW);
+                    g.drawLine(points[j][0], points[j][1], points[j + 1][0], points[j + 1][1]);
+                }
+                g.drawLine(points[n - 1][0], points[n - 1][1], points[0][0], points[0][1]);
             }
+        }
+    }
 
-            for (int j = 0; j < n; j++) { // TODO: draw_edges (3-Regular graph)
-               g.setColor(Color.YELLOW);
-               g.drawLine(points[j][0], points[j][1], points[(j + 1) % n][0], points[(j + 1) % n][1]);
-               g.setColor(Color.PINK);
-               g.drawLine(points[j][0], points[j][1], points[(j + 3) % n][0], points[(j + 3) % n][1]);
+    /**
+     * Draws the 3D vectors on the canvas using perspective projection.
+     * 
+     * @param g The Graphics object to draw on.
+     */
+    private void drawVector(Graphics g) {
+        if (_vectors != null) {
+            g.setColor(Color.PINK);
+            // Iterate through each vector
+            for (int i = 0; i < _vectors.length; i++) {
+                // Project the vector onto the 2D screen
+                int px = (int) ((_W >> 1) + (vectors[i].x * near / (vectors[i].y + far)) * _i);
+                int py = (int) ((_H >> 1) + (vectors[i].z * near / (vectors[i].y + far)) * _i);
+                
+                // Draw the vector and its index label
+                g.drawString(i + "", px, py);
+                g.drawLine(_W >> 1, _H >> 1, px, py);
+                g.drawString(_vectors[i] + "", px - 10, py - 10);
             }
-         }
-      }
-   }
+        }
+    }
 
-   private void drawVector(Graphics g) {
-      if (_vectors != null) {
-         g.setColor(Color.PINK);
-         for (int i = 0; i < _vectors.length; i++) {
-            int px = (int) ((_W >> 1) + (vectors[i].x * near / (vectors[i].y + far)) * _i),
-               py = (int) ((_H >> 1) + (vectors[i].z * near / (vectors[i].y + far)) * _i);
-            g.drawString(i + "", px, py);
-            g.drawLine(_W >> 1, _H >> 1, px, py);
-            g.drawString(_vectors[i] + "", px - 10, py - 10);
-         }
-      }
-   }
+    /**
+     * Draws the grid lines and axis lines on the canvas.
+     * 
+     * @param g The Graphics object to draw on.
+     */
+    private void drawLines(Graphics g) {
+        int center_x = _W >> 1, center_y = _H >> 1;
 
-   private void drawLines(Graphics g) {
-      int center_x = _W >> 1, center_y = _H >> 1;
-      g.setColor(Color.BLACK);
-      g.fillRect(0, 0, _W, _H);
-      for (int i = 0; i < 3; i++) {
-         int px1 = (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y + far)) * _i),
-            py1 = (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y + far)) * _i),
-            px2 = (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i << 1) + 1].y + far)) * _i),
-            py2 = (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i << 1) + 1].y + far)) * _i);
-         g.setColor(new Color(255 - i * 100, i * 110, 22 << i << 1));
-         g.drawLine(px1, py1, px2, py2);
-         for (int j = -10; j <= 10; j++) {
-            g.drawString(j + "", center_x + (px2 - center_x) / 10 * j, center_y + (py2 - center_y) / 10 * j);
-         }
-      }
-      g.setColor(new Color(90, 90, 90, 120));
-      for (int i = 0; i < 21; i++) {
-         int px1 = (int) (center_x + (gridLines[i << 2].x * near / (gridLines[i << 2].y + far)) * _i),
-            py1 = (int) (center_y + (gridLines[i << 2].z * near / (gridLines[i << 2].y + far)) * _i),
-            px2 = (int) (center_x + (gridLines[(i << 2) + 1].x * near / (gridLines[(i << 2) + 1].y + far)) * _i),
-            py2 = (int) (center_y + (gridLines[(i << 2) + 1].z * near / (gridLines[(i << 2) + 1].y + far)) * _i);
-         g.drawLine(px1, py1, px2, py2);
-         px1 = (int) (center_x + (gridLines[(i << 2) + 2].x * near / (gridLines[(i << 2) + 2].y + far)) * _i);
-         py1 = (int) (center_y + (gridLines[(i << 2) + 2].z * near / (gridLines[(i << 2) + 2].y + far)) * _i);
-         px2 = (int) (center_x + (gridLines[(i << 2) + 3].x * near / (gridLines[(i << 2) + 3].y + far)) * _i);
-         py2 = (int) (center_y + (gridLines[(i << 2) + 3].z * near / (gridLines[(i << 2) + 3].y + far)) * _i);
-         g.drawLine(px1, py1, px2, py2);
-      }
-   }
+        // Clear the canvas with black color
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, _W, _H);
+        
+        // Draw axis lines with perspective and labels
+        for (int i = 0; i < 3; i++) {
+            g.setColor(new Color(255 - i * 100, i * 110, 22 << i));
+            g.drawLine(
+                    (int) (center_x + (lines[i << 1].x * near / (lines[i << 1].y + far)) * _i),
+                    (int) (center_y + (lines[i << 1].z * near / (lines[i << 1].y + far)) * _i),
+                    (int) (center_x + (lines[(i << 1) + 1].x * near / (lines[(i << 1) + 1].y + far)) * _i),
+                    (int) (center_y + (lines[(i << 1) + 1].z * near / (lines[(i << 1) + 1].y + far)) * _i));
+            
+            // Draw unit labels on the axis lines
+            for (int j = 0; j <= gridRes; j++) {
+                double factor = j / (double) (gridRes);
+                double interpX = lines[i << 1].x + factor * (lines[(i << 1) + 1].x - lines[i << 1].x);
+                double interpY = lines[i << 1].y + factor * (lines[(i << 1) + 1].y - lines[i << 1].y);
+                double interpZ = lines[i << 1].z + factor * (lines[(i << 1) + 1].z - lines[i << 1].z);
+                int screenX = (int) (center_x + (interpX * near / (interpY + far)) * _i);
+                int screenY = (int) (center_y + (interpZ * near / (interpY + far)) * _i);
+                g.drawString((gridRes >> 1) - j + "", screenX, screenY); 
+            }
+        }
+        
+        // Draw grid lines with perspective
+        g.setColor(new Color(90, 90, 90, 120));
+        for (int i = 0; i < gridRes; i++) {
+            g.drawLine(
+                    (int) (center_x + (gridLines[i << 2].x * near / (gridLines[i << 2].y + far)) * _i),
+                    (int) (center_y + (gridLines[i << 2].z * near / (gridLines[i << 2].y + far)) * _i),
+                    (int) (center_x + (gridLines[(i << 2) + 1].x * near / (gridLines[(i << 2) + 1].y + far)) * _i),
+                    (int) (center_y + (gridLines[(i << 2) + 1].z * near / (gridLines[(i << 2) + 1].y + far)) * _i));
+            g.drawLine(
+                    (int) (center_x + (gridLines[(i << 2) + 2].x * near / (gridLines[(i << 2) + 2].y + far)) * _i),
+                    (int) (center_y + (gridLines[(i << 2) + 2].z * near / (gridLines[(i << 2) + 2].y + far)) * _i),
+                    (int) (center_x + (gridLines[(i << 2) + 3].x * near / (gridLines[(i << 2) + 3].y + far)) * _i),
+                    (int) (center_y + (gridLines[(i << 2) + 3].z * near / (gridLines[(i << 2) + 3].y + far)) * _i));
+        }
+    }
 
-   public void updateSizeFields() {
-      _W = getWidth();
-      _H = getHeight();
-   }
+    /**
+     * Updates the canvas dimensions when resized.
+     */
+    public void updateSizeFields() {
+        _W = getWidth();
+        _H = getHeight();
+    }
 
-   public void updateGridLines() {
-      for (int i = 0; i < 6; i++) {
-         lines[i] = Utils.rotX.apply(Utils.rotZ.apply(_lines[i], angleZ), angleX);
-      }
-      for (int i = 0; i < 42; i++) {
-         gridLines[i << 1] = Utils.rotX.apply(Utils.rotZ.apply(_gridLines[i << 1], angleZ), angleX);
-         gridLines[(i << 1) + 1] = Utils.rotX.apply(Utils.rotZ.apply(_gridLines[(i << 1) + 1], angleZ), angleX);
-      }
-   }
+    /**
+     * Updates the grid lines based on camera angles.
+     */
+    public void updateGridLines() {
+        // Rotate grid lines based on camera angles
+        for (int i = 0; i < 6; i++) {
+            lines[i] = Utils.rotZX.apply(_lines[i], angleZ, angleX);
+        }
+        for (int i = 0; i < gridRes << 1; i++) {
+            gridLines[i << 1] = Utils.rotZX.apply(_gridLines[i << 1], angleZ, angleX);
+            gridLines[(i << 1) + 1] = Utils.rotZX.apply(_gridLines[(i << 1) + 1], angleZ, angleX);
+        }
+    }
 
-   public void setAngleZ(double angleZ) {
-      this.angleZ = angleZ;
-   }
+    // Setters for camera angles
+    public void setAngleZ(double angleZ) {
+        this.angleZ = angleZ;
+    }
 
-   public void setAngleX(double angleX) {
-      this.angleX = angleX;
-   }
+    public void setAngleX(double angleX) {
+        this.angleX = angleX;
+    }
 
-   public void screenPositionToAngles(int x, int y) {
-      setAngleZ(x * 6.283185 / _W);
-      setAngleX(y * 6.283185 / _H);
-      updateGridLines();
-      updateShapes();
-      updateVectors();
-   }
+    /**
+     * Converts screen coordinates to camera angles and updates the view.
+     * 
+     * @param x The x-coordinate of the mouse.
+     * @param y The y-coordinate of the mouse.
+     */
+    public void screenPositionToAngles(int x, int y) {
+        setAngleZ(x * 6.283185 / _W);
+        setAngleX(y * 6.283185 / _H);
+        updateGridLines();
+        updateShapes();
+        updateVectors();
+    }
 
-   public void setVectors(V3[] vectors) {
-      _vectors = vectors;
-      updateVectors();
-   }
+    /**
+     * Sets the vectors to be drawn on the canvas.
+     * 
+     * @param vectors An array of V3 vectors.
+     */
+    public void setVectors(V3[] vectors) {
+        _vectors = vectors;
+        updateVectors();
+    }
 
-   public void setShapes(V3[][] shapes) {
-      _shapes = shapes;
-      updateShapes();
-   }
+    /**
+     * Sets the shapes to be drawn on the canvas.
+     * 
+     * @param shapes An array of V3 arrays representing the shapes.
+     */
+    public void setShapes(V3[][] shapes) {
+        _shapes = shapes;
+        updateShapes();
+    }
 
-   public void updateVectors() {
-      if (_vectors != null) {
-         vectors = new V3[_vectors.length];
-         if (vectors == null) {
+    /**
+     * Updates the vectors based on camera angles.
+     */
+    public void updateVectors() {
+        if (_vectors != null) {
             vectors = new V3[_vectors.length];
-         }
-         for (int i = 0; i < _vectors.length; i++) {
-            vectors[i] = Utils.rotX.apply(Utils.rotZ.apply(_vectors[i], angleZ), angleX);
-         }
-      }
-   }
-
-   public void updateShapes() {
-      if (_shapes != null) {
-         shapes = new V3[_shapes.length][];
-         for (int i = 0; i < _shapes.length; i++) {
-            if (shapes[i] == null) {
-               shapes[i] = new V3[_shapes[i].length];
+            if (vectors == null) {
+                vectors = new V3[_vectors.length];
             }
-            for (int j = 0; j < _shapes[i].length; j++) {
-               shapes[i][j] = Utils.rotX.apply(Utils.rotZ.apply(_shapes[i][j], angleZ), angleX);
+            for (int i = 0; i < _vectors.length; i++) {
+                vectors[i] = Utils.rotZX.apply(_vectors[i], angleZ, angleX);
             }
-         }
-      } else {
-         shapes = null;
-      }
-   }
+        }
+    }
 
-   public void incrementI(int i) {
-      _i += i;
-   }
+    /**
+     * Updates the shapes based on camera angles.
+     */
+    public void updateShapes() {
+        if (_shapes != null) {
+            shapes = new V3[_shapes.length][];
+            for (int i = 0; i < _shapes.length; i++) {
+                if (shapes[i] == null) {
+                    shapes[i] = new V3[_shapes[i].length];
+                }
+                for (int j = 0; j < _shapes[i].length; j++) {
+                    shapes[i][j] = Utils.rotZX.apply(_shapes[i][j], angleZ, angleX);
+                }
+            }
+        }
+    }
 
-   @Override
-   public void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      drawFrame(g);
-   }
+    /**
+     * Increments or decrements the zoom level.
+     * 
+     * @param amount The amount to increment or decrement by.
+     */
+    public void incrementI(int amount) {
+        _i += amount;
+    }
+
+    /**
+     * Overrides the paintComponent method to draw the frame using double buffering.
+     * 
+     * @param g The Graphics object to draw on.
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        drawFrame(g);
+    }
 }
 
+/**
+ * This enum defines various 3D shapes and provides a method to get their vertices.
+ */
 enum Shape {
-   CUBE {
-      @Override
-      public V3[] getVectors() {
-         V3[] vectors = {
-               new V3(-1, 1, 1), new V3(-1, 1, -1), new V3(1, 1, -1), new V3(1, 1, 1),
-               new V3(1, -1, 1), new V3(1, -1, -1), new V3(-1, -1, -1), new V3(-1, -1, 1)
-         };
-         return vectors;
-      }
+   /**
+    * Represents a cube with vertices at unit distances from the origin.
+    */
+   
+    CUBE {
+       @Override
+       public V3[] getVectors() {
+           // Define the vertices of the cube
+           V3[] vectors = {
+                 new V3(-1, 1, 1), new V3(-1, 1, -1), new V3(1, 1, -1), new V3(1, 1, 1),
+                 new V3(1, -1, 1), new V3(1, -1, -1), new V3(-1, -1, -1), new V3(-1, -1, 1)
+           };
+           return vectors;
+       }
    },
+   
+   /**
+    * Represents a pyramid with its apex at (0, 0, 1) and base vertices in the z = -1 plane.
+    */
    PYRAMID {
-      @Override
-      public V3[] getVectors() {
-         V3[] vectors = {
-               new V3(0, 0, 1), new V3(-1, 1, -1), new V3(1, 1, -1),
-               new V3(1, -1, -1), new V3(-1, -1, -1)
-         };
-         return vectors;
-      }
+       @Override
+       public V3[] getVectors() {
+           // Define the vertices of the pyramid
+           V3[] vectors = {
+                 new V3(0, 0, 1), new V3(-1, 1, -1), new V3(1, 1, -1),
+                 new V3(1, -1, -1), new V3(-1, -1, -1)
+           };
+           return vectors;
+       }
    },
+   
+   /**
+    * Represents a sphere with a specified resolution (number of vertices).
+    */
    SPHERE(96) {
-      @Override
-      public V3[] getVectors() {
-         V3 aux = new V3(1, 0, 0);
-         V3[] vectors = new V3[res * res];
-         for (int i = 0; i < res; i++) {
-            aux = Utils.rotY.apply(aux, i * (2 * Math.PI / res));
-            for (int j = 0; j < res; j++) {
-               vectors[i * res + j] = Utils.rotX.apply(aux, j * (2 * Math.PI / res));
-            }
-         }
-         return vectors;
-      }
-   };
+       @Override
+       public V3[] getVectors() {
+           // Create an array to store the sphere's vertices
+           V3[] vectors = new V3[res * res];
+           V3 aux = new V3(1, 0, 0);
 
+           // Generate sphere vertices using spherical coordinates
+           for (int i = 0; i < res; i++) {
+               aux = Utils.rotY.apply(aux, i * (2 * Math.PI / res));
+               for (int j = 0; j < res; j++) {
+                   vectors[i * res + j] = Utils.rotX.apply(aux, j * (2 * Math.PI / res));
+               }
+           }
+           return vectors;
+       }
+   };
+   // Resolution (number of vertices) for the sphere
+   public int res;
+   // Constructor for shapes with custom resolution
+   Shape(int res) {
+       this.res = res;
+   }
+
+   // Default constructor
    Shape() {
    }
 
-   Shape(int res) {
-      this.res = res;
-   };
 
-   public int res;
-
+   /**
+    * Abstract method to be implemented by each shape to return its vertices.
+    * 
+    * @return An array of V3 vectors representing the vertices of the shape.
+    */
    public abstract V3[] getVectors();
 }
